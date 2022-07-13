@@ -8,6 +8,12 @@ inputs:
   github_personal_token:
     description: " Github Personal Token to Query github for dependabot alerts"
     required: true
+  slack_token:
+    description: " Slack Bot Token to Send Alerts "
+    required: true
+  channel:
+    description: " Slack Channel to Send the Alerts Too"
+    required: true
 runs:
   using: 'docker'
   image: 'Dockerfile'
