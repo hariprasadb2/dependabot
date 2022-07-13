@@ -2,8 +2,8 @@ name: "Dependapager"
 author: " Shaik Ajmal R"
 description: "A workflow action to send you weekly dependabot alerts to slack and create Jira tickets"
 branding:
-  icon: 'alert-triangle'  
-  color: 'red'
+  icon: 'code'  
+  color: 'green'
 inputs:
   github_personal_token:
     description: " Github Personal Token to Query github for dependabot alerts"
