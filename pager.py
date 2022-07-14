@@ -1,25 +1,36 @@
-from urllib import response
 import requests
 import os 
 import sys
 import json
 import datetime
 from dateutil import parser
-
+from jira import JIRA
 #implement grepping dependabot alerts through grpahql
 class Dependapager(object):
 
     def __init__(self):
+
+
+        # Required Secrets for this awesome code to function.
         self.github_token=os.environ["INPUT_GITHUB_PERSONAL_TOKEN"]
-        #self.jira_token=os.environ("")
+
+        # Required Jira Variables 
+        self.jira_token=os.environ["INPUT_JIRA_TOKEN"]
+        self.jira_url=os.environ["INPUT_JIRA_URL"]
+        self.jira_useremail=os.environ["INPUT_JIRA_USEREMAIL"]
+        self.jira_projectKey=os.environ["INPUT_JIRA_PROJECT_KEY"]
+        self.jira_issue_type=os.environ["INPUT_JIRA_ISSUE_TYPE"]
+        # Required Slack Variables 
         self.slack_token=os.environ["INPUT_SLACK_TOKEN"]
         self.slack_channel=os.environ["INPUT_CHANNEL"]
-        self.reponame=os.environ["GITHUB_REPOSITORY"].split("/")[-1]
-        self.owner=os.environ["GITHUB_REPOSITORY_OWNER"]
-        #self.dependabot_url="https://github.com/{}/{}/security/dependabot".format(self.owner,self.reponame)
+        # Initilializing required Varibales for this code
         self.alerts={}
         self.total_alerts=0
         self.stats={"CRITICAL":0,"HIGH":0,"MODERATE":0,"LOW":0}
+        self.reponame=os.environ["GITHUB_REPOSITORY"].split("/")[-1]
+        self.owner=os.environ["GITHUB_REPOSITORY_OWNER"]
+        self.dependabot_url="https://github.com/{}/{}/security/dependabot".format(self.owner,self.reponame)
+
     
     def fetch_alerts(self):
         
@@ -49,7 +60,8 @@ class Dependapager(object):
         query=query.replace("REPO_NAME",self.reponame)
         query=query.replace("REPO_OWNER",self.owner)
         
-
+        # Github Api to fetch the required data 
+        
         url="https://api.github.com/graphql"
         header= { "Authorization":"Bearer {}".format(self.github_token)}
         response=requests.post(url,headers=header,json={'query':query})
@@ -62,6 +74,7 @@ class Dependapager(object):
         else :
             print(response.reason)
             sys.exit(1)
+
     
     def parse_data(self):
 
@@ -69,7 +82,7 @@ class Dependapager(object):
         if data_dict["data"]["repository"]["vulnerabilityAlerts"]["nodes"]:
             for nodes in data_dict["data"]["repository"]["vulnerabilityAlerts"]["nodes"]:
                 
-                # Store data as {"ghsaid":["severity","advisory","advisory_url"]}
+                # Store data as {"ghsaid":["severity","advisory","advisory_url",""]}
                 created_at=nodes["createdAt"]
                 package_name=nodes["securityVulnerability"]["package"]["name"]
                 severity=nodes["securityVulnerability"]["severity"]
@@ -175,12 +188,58 @@ class Dependapager(object):
 
 
         if (json.loads(content_response.text)["ok"])==True and content_response.status_code==200:
-            print("Slakc Alert sent Successfully")
-            sys.exit(0)
+            print("Slack Alert sent Successfully")
         else:
             print("Error Sending Slack Alert")
             sys.exit(1)
-            
-Dependapager().send_slack_alert()
+    
+    def create_jira_issues(self):
+        issue_list=[]
+        try:
+
+            jira=JIRA(self.jira_url,basic_auth=(self.jira_useremail,self.jira_token))
+
+            description="Affected Package:{}\nRepo URL:{}\nAdvisory URL:{}\nDescription: {}\n"
+
+
+            for key in self.filtered_alerts:
+                if self.filtered_alerts[key][0]=="CRITICAL" or self.filtered_alerts[key][0]=="HIGH":
+                    issue_details={
+                            'project':self.jira_projectKey,
+                            'summary': "Dependabot Alerts in repo : {}".format(self.reponame),
+                            'description':description.format(self.filtered_alerts[key][4],self.dependabot_url,self.filtered_alerts[key][2],self.filtered_alerts[key][1]),
+                            'issuetype': {'name': self.jira_issue_type},
+                        }
+                    issue_list.append(issue_details)
+                    flag=True
+                else:
+                    flag=False
+            if flag:
+                issues=jira.create_issues(field_list=issue_list)
+                print(" Jira Tickets Created for High and Critical Bugs")
+            else:
+                print("Jira Tickets Not Created ,there are no High or Critical Bugs This week")
+                    
+        except Exception as E:
+            print("Exception occured :{}".format(E))
+            sys.exit(1)
+   
+    def run(self):
+        try:
+            self.send_slack_alert()
+            self.create_jira_issues()
+
+            #set outputs
+            print("::set-output name=total_alerts::{}".format(self.total_alerts))
+            print("::set-output name=critical_alerts::{}".format(self.stats["CRITICAL"]))
+            print("::set-output name=high_alerts::{}".format(self.stats["HIGH"]))
+            print("::set-output name=moderate_alerts::{}".format(self.stats["MODERATE"]))
+            print("::set-output name=low_alerts::{}".format(self.stats["LOW"]))
+        except Exception as e:
+            print("Exception:{}".format(e))
+            sys.exit(1)
+
+
+Dependapager().run()
 
 

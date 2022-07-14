@@ -1,6 +1,6 @@
 FROM python:3.7-slim AS builder
 ADD . /app
-RUN pip install --target=/app requests python-dateutil
+RUN pip install --target=/app requests python-dateutil jira setuptools
 
 
 FROM gcr.io/distroless/python3-debian10
