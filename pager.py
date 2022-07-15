@@ -127,71 +127,75 @@ class Dependapager(object):
         url="https://slack.com/api/chat.postMessage"
         header={"Authorization":"Bearer {}".format(self.slack_token)}
         blocks=[]
-
-        for key in self.filtered_alerts:
-            block= {
-                        "type": "section",
-                        "fields": [
-                            {
-                                "type": "mrkdwn",
-                                "text": "*Package Name:*\n{}".format(self.filtered_alerts[key][4])
-                            },
-                            {
-                                "type": "mrkdwn",
-                                "text": "*Severity:*\n{}".format(self.filtered_alerts[key][0])
-                            },
-                            {
-                                "type": "mrkdwn",
-                                "text": "*Summary:*\n{}".format(self.filtered_alerts[key][1])
-                            }
-                        ],
-                        "accessory": {
-                            "type": "button",
-                            "text": {
-                                "type": "plain_text",
-                                "text": "View Advisory",
-                            
-                            },
-                            "value": "advisory",
-                            "url":self.filtered_alerts[key][2],
-                            "action_id": "button-action"
-                        }
-                        
-                    }
-            blocks.append(block)
-            
-        
-        header_block={
-                "channel":self.slack_channel,
-                    
-                    "blocks": [
-                        {
+        if bool(self.filtered_alerts):
+            for key in self.filtered_alerts:
+                block= {
                             "type": "section",
-                            "text": {
-                                "type": "mrkdwn",
-                                "text": "*Dependabot Alerts for repo:* {}".format("pwned-17")
+                            "fields": [
+                                {
+                                    "type": "mrkdwn",
+                                    "text": "*Package Name:*\n{}".format(self.filtered_alerts[key][4])
+                                },
+                                {
+                                    "type": "mrkdwn",
+                                    "text": "*Severity:*\n{}".format(self.filtered_alerts[key][0])
+                                },
+                                {
+                                    "type": "mrkdwn",
+                                    "text": "*Summary:*\n{}".format(self.filtered_alerts[key][1])
+                                }
+                            ],
+                            "accessory": {
+                                "type": "button",
+                                "text": {
+                                    "type": "plain_text",
+                                    "text": "View Advisory",
+                                
+                                },
+                                "value": "advisory",
+                                "url":self.filtered_alerts[key][2],
+                                "action_id": "button-action"
                             }
                             
-                        },
-                        {
-                            "type": "divider"
-                        },
-                    ]
-
-        }
-        header_response=requests.post(url,json=header_block,headers=header)
-        data={
+                        }
+                blocks.append(block)
+            
+            
+            header_block={
                     "channel":self.slack_channel,
-                    "blocks": blocks
+                        
+                        "blocks": [
+                            {
+                                "type": "section",
+                                "text": {
+                                    "type": "mrkdwn",
+                                    "text": "*Dependabot Alerts for repo:* {}".format("pwned-17")
+                                }
+                                
+                            },
+                            {
+                                "type": "divider"
+                            },
+                        ]
+
             }
-        content_response=requests.post(url,json=data,headers=header)
+            header_response=requests.post(url,json=header_block,headers=header)
+            data={
+                        "channel":self.slack_channel,
+                        "blocks": blocks
+                }
+            content_response=requests.post(url,json=data,headers=header)
 
 
-        if (json.loads(content_response.text)["ok"])==True and content_response.status_code==200:
-            print("Slack Alert sent Successfully")
+            if (json.loads(content_response.text)["ok"])==True and content_response.status_code==200:
+                print("Slack Alert sent Successfully")
+            else:
+                print("Error Sending Slack Alert")
+                print(content_response.reason)
+                sys.exit(1)
         else:
-            print("Error Sending Slack Alert")
-            sys.exit(1)
+            print(" Skipping Slack and Jira Alerts ,No New Alerts for this week")
+            sys.exit(0)
     
     def create_jira_issues(self):
         issue_list=[]
