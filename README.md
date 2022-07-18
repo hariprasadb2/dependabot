@@ -40,7 +40,7 @@ github_personal_token:
 The Action also provides ouptuts that can be further used in your workflows for geting the stats as summaries , perform conditional logic with the stats of these alerts 
 
 ```
-utputs:
+outputs:
   total_alerts:
     description: "Total Open Alerts"
   critical_alerts:
