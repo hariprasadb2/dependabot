@@ -59,7 +59,7 @@ outputs:
 ``` name: Dependapager
 on:
   schedule:
-    - cron: "0 0 * * *"
+    - cron: "0 0 * * 1"
   workflow_dispatch:
 
 jobs:
