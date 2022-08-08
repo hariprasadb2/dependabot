@@ -117,7 +117,7 @@ class Dependapager(object):
             converted_date=datetime.date(int(date_as_list[0]),int(date_as_list[1]),int(date_as_list[2]))
             today_date=datetime.date.today()
             date_diff_as_str=str(abs(converted_date - today_date))
-            date_diff_as_number=int(date_diff_as_str.split(",")[0].split(" ")[0])
+            date_diff_as_number=int(date_diff_as_str.split(",")[0].split(" ")[0].split(":")[0])
             
             if date_diff_as_number <= 7:
                 self.filtered_alerts[ele]=self.alerts[ele]
@@ -169,7 +169,7 @@ class Dependapager(object):
                                 "type": "section",
                                 "text": {
                                     "type": "mrkdwn",
-                                    "text": "*Dependabot Alerts for repo:* {}".format("pwned-17")
+                                    "text": "*Dependabot Alerts for repo:* {}".format(self.reponame)
                                 }
                                 
                             },
