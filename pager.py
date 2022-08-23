@@ -65,6 +65,7 @@ class Dependapager(object):
         url="https://api.github.com/graphql"
         header= { "Authorization":"Bearer {}".format(self.github_token)}
         response=requests.post(url,headers=header,json={'query':query})
+        print(response.text)
 
         # Check Response 
         if response.status_code==200:
