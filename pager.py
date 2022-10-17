@@ -192,7 +192,7 @@ class Dependapager(object):
                 print("Slack Alert sent Successfully")
             else:
                 print("Error Sending Slack Alert")
-                print(content_response.reason)
+                print(content_response.text)
                 sys.exit(1)
         else:
             print(" Skipping Slack and Jira Alerts ,No New Alerts for this week")
