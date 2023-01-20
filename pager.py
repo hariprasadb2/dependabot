@@ -120,7 +120,7 @@ class Dependapager(object):
             date_diff_as_str=str(abs(converted_date - today_date))
             date_diff_as_number=int(date_diff_as_str.split(",")[0].split(" ")[0].split(":")[0])
             
-            if date_diff_as_number <= 7:
+            if date_diff_as_number <= 30:
                 self.filtered_alerts[ele]=self.alerts[ele]
 
     def send_slack_alert(self):
